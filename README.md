@@ -1,0 +1,2 @@
+# smtpbin
+SMTP Capture Server
