@@ -14,14 +14,14 @@ class Handler(object):
     def format_header(self, name, value):
         return '{!s}: {!s}\n'.format(name, value)
 
-    def dispatch(self, req):
+    def dispatch(self, req, *args, **kwargs):
         # Get the method for the request, or raise error
         handler = getattr(self, "do_{}".format(req.command), None)
 
         if not handler:
             raise HTTPError(405)
 
-        response = handler(req)
+        response = handler(req, *args, **kwargs)
         status, headers = 200, {}
 
         if isinstance(response, tuple):

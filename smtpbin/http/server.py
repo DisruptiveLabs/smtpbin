@@ -1,3 +1,5 @@
+# See http://code.activestate.com/recipes/259148-simple-http-server-based-on-asyncoreasynchat/ for a different approach. Might make 100-continue easier...
+
 import asyncore
 import socket
 

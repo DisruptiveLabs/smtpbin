@@ -6,6 +6,8 @@ from smtpbin.http.exceptions import HTTPError
 from smtpbin.http.handlers.api.inbox import APIInboxHandler
 from smtpbin.http.handlers.api.inboxes import APIInboxesHandler
 from smtpbin.http.handlers.api.index import APIIndexHandler
+from smtpbin.http.handlers.api.messages import APIMessagesHandler
+from smtpbin.http.handlers.api.message import APIMessageHandler
 from smtpbin.http.handlers.error import ErrorHandler
 from smtpbin.http.handlers.index import IndexHandler
 from smtpbin.http.handlers.static import StaticHandler
@@ -19,11 +21,11 @@ class HTTPRouter(asyncore.dispatcher):
     map = {
         re.compile(r'^/$'): IndexHandler,
 
-        re.compile(r'^/api/$'): APIIndexHandler,
-        re.compile(r'^/api/inbox$'): APIInboxesHandler,
-        re.compile(r'^/api/inbox/(\w+)$'): APIInboxHandler,
-        # re.compile(r'^/api/inbox/(.+)/message$'): APIMessagesHandler,
-        # re.compile(r'^/api/inbox/(.+)/message/(\d+)$'): APIMessagesHandler,
+        re.compile('^/api/?$'): APIIndexHandler,
+        re.compile('^/api/inbox/?$'): APIInboxesHandler,
+        re.compile('^/api/inbox/(?P<inbox_name>[\w\.]+)/?$'): APIInboxHandler,
+        re.compile('^/api/inbox/(?P<inbox_name>[\w\.]+)/messages/?$'): APIMessagesHandler,
+        re.compile('^/api/inbox/(?P<inbox_name>[\w\.]+)/messages/(?P<message_id>\d+)/?$'): APIMessageHandler,
 
         # Catch-all routes
         re.compile(r'^/.*\.(png|css|js)$'): StaticHandler,
@@ -67,10 +69,12 @@ class HTTPRouter(asyncore.dispatcher):
 
         try:
             for path, handler in self.map.items():
-                if path.match(req.path):
-                    handler(self).dispatch(req)
+                matches = path.match(req.path)
+                if matches:
+                    handler(self).dispatch(req, **matches.groupdict())
                     break
             else:
+                print("Cant find route for {}" .format(req.path))
                 self.error(self).dispatch(req, HTTPError(404))
         except Exception as e:
             self.error(self).dispatch(req, e)

@@ -44,12 +44,21 @@ class DataBase(object):
             self._conn.commit()
             cur.close()
 
-    def get_messages(self, inbox):
-        with self.cursor as cur:
+    def get_message(self, inbox, message):
+        with self.cursor() as cur:
             cur.execute("SELECT id, received, fromaddr, toaddr, subject, body "
                         "FROM messages "
-                        "WHERE inbox = ?", (inbox,))
+                        "WHERE inbox = ? "
+                        "  AND id = ?", (inbox, message,))
             return cur.fetchone()
+
+    def get_messages(self, inbox):
+        with self.cursor() as cur:
+            cur.execute("SELECT id, received, fromaddr, toaddr, subject "
+                        "FROM messages "
+                        "WHERE inbox = ? "
+                        "ORDER BY id DESC;", (inbox,))
+            return cur.fetchall()
 
     def add_message(self, inbox, fromaddr, toaddr, subject, body):
         with self.cursor() as cur:
@@ -62,12 +71,26 @@ class DataBase(object):
             cur.execute("SELECT COUNT(*) AS COUNT FROM messages;")
             return cur.fetchone()['COUNT']
 
+    def get_inbox_by_id(self, id):
+        with self.cursor() as cur:
+            cur.execute("SELECT id, name, apikey, count, unread "
+                        "FROM inbox "
+                        "WHERE id = ?;", (id, ))
+            return cur.fetchone()
+
+    def get_inbox_by_name(self, name):
+        with self.cursor() as cur:
+            cur.execute("SELECT id, name, apikey, count, unread "
+                        "FROM inbox "
+                        "WHERE name = ?;", (name,))
+            return cur.fetchone()
+
     def get_inbox(self, name, apikey):
         with self.cursor() as cur:
             cur.execute("SELECT id, name, apikey, count, unread "
                         "FROM inbox "
                         "WHERE name = ? "
-                        "AND apikey = ?;", (name, apikey))
+                        "  AND apikey = ?;", (name, apikey))
             return cur.fetchone()
 
     def get_inboxes(self):
