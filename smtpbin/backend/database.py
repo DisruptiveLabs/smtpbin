@@ -5,6 +5,13 @@ import sqlite3
 from .migration import MIGRATIONS
 
 
+def _dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
+
+
 class DataBase(object):
     def __init__(self, uri='messages.db'):
         self._conn = sqlite3.connect(uri)
@@ -30,17 +37,47 @@ class DataBase(object):
     @contextlib.contextmanager
     def cursor(self):
         cur = self._conn.cursor()
+        cur.row_factory = _dict_factory
         try:
             yield cur
         finally:
+            self._conn.commit()
             cur.close()
 
-    def add_message(self, fromaddr, toaddr, subject, body):
-        self._conn.execute("INSERT INTO messages (received, fromaddr, toaddr, subject, body) VALUES (?, ?, ?, ?, ?)",
-                           (datetime.datetime.now(), fromaddr, toaddr, subject, body))
-        self._conn.commit()
+    def get_messages(self, inbox):
+        with self.cursor as cur:
+            cur.execute("SELECT id, received, fromaddr, toaddr, subject, body "
+                        "FROM messages "
+                        "WHERE inbox = ?", (inbox,))
+            return cur.fetchone()
+
+    def add_message(self, inbox, fromaddr, toaddr, subject, body):
+        with self.cursor() as cur:
+            cur.execute("INSERT INTO messages (inbox, received, fromaddr, toaddr, subject, body) "
+                        "VALUES (?, ?, ?, ?, ?, ?)", (inbox, datetime.datetime.now(), fromaddr, toaddr, subject, body))
+            return cur.lastrowid
 
     def count_messages(self):
         with self.cursor() as cur:
-            cur.execute("SELECT COUNT(*) FROM messages;")
+            cur.execute("SELECT COUNT(*) AS COUNT FROM messages;")
+            return cur.fetchone()['COUNT']
+
+    def get_inbox(self, name, apikey):
+        with self.cursor() as cur:
+            cur.execute("SELECT id, name, apikey "
+                        "FROM inbox "
+                        "WHERE name = ? "
+                        "AND apikey = ?;", (name, apikey))
             return cur.fetchone()
+
+    def get_inboxes(self):
+        with self.cursor() as cur:
+            cur.execute("SELECT id, name, apikey "
+                        "FROM inbox;")
+            return cur.fetchall()
+
+    def create_inbox(self, name, apikey):
+        with self.cursor() as cur:
+            cur.execute("INSERT INTO inbox (name, apikey) "
+                        "VALUES (?, ?)", (name, apikey))
+            return cur.lastrowid

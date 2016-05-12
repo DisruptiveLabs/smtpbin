@@ -4,5 +4,5 @@ from smtpbin.http.utils.jsonify import jsonify
 
 class MessagesHandler(Handler):
     def do_GET(self, req):
-        message_count = self.db.count_messages()
+        message_count = self.database.count_messages()
         return jsonify({'messages': message_count})

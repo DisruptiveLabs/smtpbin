@@ -1,0 +1,74 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,700,500);
+* {
+  font-family: 'Roboto', sans-serif;
+  padding: 0;
+  background-color: #f7f7f7;
+}
+html,
+body {
+  height: 100%;
+}
+a {
+  height: 1.5em;
+  line-height: 1.5em;
+  transition: background-color 0.2s linear;
+}
+a:hover {
+  background-color: #ddd;
+}
+.wrap {
+  height: 100vh;
+  display: flex;
+}
+.wrap main {
+  flex: 1;
+  display: flex;
+}
+.wrap main aside {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  background-color: #f7f7f7;
+  box-shadow: 4px 0px 5px 0px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  padding: 4px;
+  margin-right: 8px;
+}
+.wrap main aside h3 {
+  flex: 0 0 auto;
+  line-height: 2em;
+  font-size: 1.8em;
+}
+.wrap main article {
+  flex: 4;
+  display: flex;
+  flex-direction: column;
+}
+.wrap main article nav,
+.wrap main article section {
+  overflow-y: auto;
+}
+.wrap main article nav {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-content: flex-start;
+  box-shadow: 0px 4px 5px 0px rgba(0, 0, 0, 0.5);
+  margin-bottom: 8px;
+  margin-left: -8px;
+  padding-left: 8px;
+  z-index: 5;
+}
+.wrap main article nav a {
+  flex: 0 0 auto;
+  height: 1.5em;
+  line-height: 1.5em;
+}
+.wrap main article nav a.selected {
+  background-color: #dadada;
+}
+.wrap main article section {
+  flex: 3;
+}

@@ -5,6 +5,7 @@ from smtpbin.http.exceptions import HTTPError
 from smtpbin.http.handlers.api.messages import MessagesHandler
 from smtpbin.http.handlers.error import ErrorHandler
 from smtpbin.http.handlers.index import IndexHandler
+from smtpbin.http.handlers.static import StaticHandler
 from smtpbin.http.request import HTTPRequest
 
 
@@ -14,12 +15,15 @@ class HTTPRouter(asyncore.dispatcher):
     # Note: the map is order dependent. Place catch-alls last
     map = {
         re.compile(r'^/$'): IndexHandler,
-        re.compile(r'^/api/messages'): MessagesHandler,
+        re.compile(r'^/api/messages$'): MessagesHandler,
+
+        # Catch-all routes
+        re.compile(r'^/.*\.(png|css|js)$'): StaticHandler,
     }
 
     def __init__(self, client, addr, server):
         asyncore.dispatcher.__init__(self, client)
-        self.db = server.db
+        self.database = server.database
 
     def handle_read(self):
         # Get the whole request

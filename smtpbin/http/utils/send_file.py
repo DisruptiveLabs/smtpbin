@@ -14,4 +14,4 @@ def send_file(name):
         with open(filename, 'rb') as f:
             return 200, f.read(), {'Content-Length': os.stat(filename).st_size}
     except IOError:
-        raise HTTPError(404, filename)
+        raise HTTPError(404, name)

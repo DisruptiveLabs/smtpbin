@@ -4,7 +4,7 @@ import http.client
 class Handler(object):
     def __init__(self, client):
         self.client = client
-        self.db = client.db
+        self.database = client.database
 
     def make_http_response(self, status):
         return 'HTTP/1.1 {} {}\n'.format(status, http.client.responses[status])

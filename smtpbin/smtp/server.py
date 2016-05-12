@@ -2,16 +2,19 @@ import email
 import smtpd
 
 from smtpbin.backend import DataBase
+from smtpbin.smtp.channel import SMTPBinChannel
 
 
 class SMTPBinServer(smtpd.SMTPServer):
+    channel_class = SMTPBinChannel
+
     def __init__(self, addr):
         super().__init__(addr, None)
         self.log_to_stdout = True
         self.database = DataBase()
         print("Listening for SMTP on {0}:{1}".format(*addr))
 
-    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+    def process_message(self, inbox, peer, mailfrom, rcpttos, data, **kwargs):
         message = email.message_from_string(data)
 
         if self.log_to_stdout:
@@ -22,4 +25,4 @@ class SMTPBinServer(smtpd.SMTPServer):
             print(data)
 
         for recipient in rcpttos:
-            self.database.add_message(mailfrom, recipient, message['Subject'], data)
+            self.database.add_message(inbox, mailfrom, recipient, message['Subject'], data)

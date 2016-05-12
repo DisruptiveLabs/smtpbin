@@ -8,7 +8,7 @@ from smtpbin.http.router import HTTPRouter
 class HTTPServer(asyncore.dispatcher):
     def __init__(self, addr):
         self.addr = addr
-        self.db = DataBase()
+        self.database = DataBase()
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
