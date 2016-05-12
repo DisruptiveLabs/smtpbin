@@ -12,9 +12,9 @@ HTTP_PORT = int(os.environ.get('HTTP_PORT', '8000'))
 SMTP_PORT = int(os.environ.get('SMTP_PORT', '25000'))
 
 
-def run_servers(database):
-    httpd = HTTPServer((LISTEN_ADDR, HTTP_PORT), database)
-    smtpd = SMTPBinServer((LISTEN_ADDR, SMTP_PORT), database)
+def run_servers(database, listen, http_port, smtp_port):
+    httpd = HTTPServer((listen, http_port), database)
+    smtpd = SMTPBinServer((listen, smtp_port), database)
 
     try:
         asyncore.loop()
@@ -55,6 +55,9 @@ parser.add_argument("--database", "-d", help="Path to store the sqlite database"
 subparsers = parser.add_subparsers(help="Available Commands", dest="action")
 
 run_parser = subparsers.add_parser('run', help='Run the server')
+run_parser.add_argument("--listen", default=LISTEN_ADDR, type=str, help="Address to listen on")
+run_parser.add_argument("--http-port", default=HTTP_PORT, type=int, help="Port for the HTTP Server")
+run_parser.add_argument("--smtp-port", default=SMTP_PORT, type=int, help="Port for the SMTP Server")
 
 create_inbox_parser = subparsers.add_parser('create_inbox', help="Create a new inbox")
 create_inbox_parser.add_argument("name", help="Inbox name, also the username for SMTP")
@@ -72,7 +75,8 @@ def main():
     database = DataBase(args.database)
 
     if args.action == 'run':
-        return run_servers(database)
+
+        return run_servers(database, args.listen, args.http_port, args.smtp_port)
     elif args.action == 'create_inbox':
         return create_inbox(database, args.name)
     elif args.action == 'reset_apikey':
