@@ -28,7 +28,7 @@ class HTTPRouter(asyncore.dispatcher):
         re.compile('^/api/inbox/(?P<inbox_name>[\w\.]+)/messages/(?P<message_id>\d+)/?$'): APIMessageHandler,
 
         # Catch-all routes
-        re.compile(r'^/.*\.(png|css|js)$'): StaticHandler,
+        re.compile(r'^/.*\.(png|css|jsx?)$'): StaticHandler,
     }
 
     def __init__(self, client, addr, server):
