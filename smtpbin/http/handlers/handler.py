@@ -1,5 +1,7 @@
 import http.client
 
+from smtpbin.http.exceptions import HTTPError
+
 
 class Handler(object):
     def __init__(self, client):
@@ -15,6 +17,10 @@ class Handler(object):
     def dispatch(self, req):
         # Get the method for the request, or raise error
         handler = getattr(self, "do_{}".format(req.command), None)
+
+        if not handler:
+            raise HTTPError(405)
+
         response = handler(req)
         status, headers = 200, {}
 

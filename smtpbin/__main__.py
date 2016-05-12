@@ -12,6 +12,7 @@ httpd = HTTPServer((LISTEN_ADDR, HTTP_PORT))
 smtpd = SMTPBinServer((LISTEN_ADDR, SMTP_PORT))
 
 try:
+    print(asyncore.socket_map)
     asyncore.loop()
 except KeyboardInterrupt:
     pass

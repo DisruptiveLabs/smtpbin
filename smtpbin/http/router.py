@@ -1,8 +1,11 @@
 import asyncore
+import errno
 import re
 
 from smtpbin.http.exceptions import HTTPError
-from smtpbin.http.handlers.api.messages import MessagesHandler
+from smtpbin.http.handlers.api.inbox import APIInboxHandler
+from smtpbin.http.handlers.api.inboxes import APIInboxesHandler
+from smtpbin.http.handlers.api.index import APIIndexHandler
 from smtpbin.http.handlers.error import ErrorHandler
 from smtpbin.http.handlers.index import IndexHandler
 from smtpbin.http.handlers.static import StaticHandler
@@ -15,7 +18,12 @@ class HTTPRouter(asyncore.dispatcher):
     # Note: the map is order dependent. Place catch-alls last
     map = {
         re.compile(r'^/$'): IndexHandler,
-        re.compile(r'^/api/messages$'): MessagesHandler,
+
+        re.compile(r'^/api/$'): APIIndexHandler,
+        re.compile(r'^/api/inbox$'): APIInboxesHandler,
+        re.compile(r'^/api/inbox/(\w+)$'): APIInboxHandler,
+        # re.compile(r'^/api/inbox/(.+)/message$'): APIMessagesHandler,
+        # re.compile(r'^/api/inbox/(.+)/message/(\d+)$'): APIMessagesHandler,
 
         # Catch-all routes
         re.compile(r'^/.*\.(png|css|js)$'): StaticHandler,
@@ -25,9 +33,34 @@ class HTTPRouter(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self, client)
         self.database = server.database
 
+    def read_request(self):
+        reqdata = b''
+        sent_100 = False
+
+        while True:
+            try:
+                data = self.recv(1024)
+                if data:
+                    reqdata += data
+                if not data or len(data) < 1024:
+                    if not sent_100 and b'100-continue' in reqdata:
+                        sent_100 = True
+                        self.send(b'HTTP/1.1 100 Continue\r\n')
+                    else:
+                        break
+            except IOError as ioerror:
+                if ioerror.errno == errno.EAGAIN:
+                    pass
+                elif ioerror.errno == errno.EWOULDBLOCK:
+                    pass
+
+        return reqdata
+
     def handle_read(self):
         # Get the whole request
-        data = self.recv(1024)
+
+        data = self.read_request()
+
         req = HTTPRequest(data)
 
         print(req.command, req.path)

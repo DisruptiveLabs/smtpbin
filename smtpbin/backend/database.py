@@ -64,7 +64,7 @@ class DataBase(object):
 
     def get_inbox(self, name, apikey):
         with self.cursor() as cur:
-            cur.execute("SELECT id, name, apikey "
+            cur.execute("SELECT id, name, apikey, count, unread "
                         "FROM inbox "
                         "WHERE name = ? "
                         "AND apikey = ?;", (name, apikey))
@@ -72,7 +72,7 @@ class DataBase(object):
 
     def get_inboxes(self):
         with self.cursor() as cur:
-            cur.execute("SELECT id, name, apikey "
+            cur.execute("SELECT id, name, apikey, count, unread "
                         "FROM inbox;")
             return cur.fetchall()
 
