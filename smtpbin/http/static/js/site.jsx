@@ -10,7 +10,7 @@ class InboxNav extends React.Component {
                   }}
                   onClick={ e => this.props.onClick(inbox) }
                   key={inbox.name}>
-                {inbox.name}
+                {inbox.name} ({inbox.unread} unread)
               </a>
           )}
         </aside>
@@ -24,12 +24,14 @@ class MessageList extends React.Component {
         <nav class="list">
           {this.props.messages.map(message =>
               <a class="message"
-                  style={{
+                 style={{
                     backgroundColor: message == this.props.message ? "#dadada": null
                   }}
                  onClick={ e => this.props.onClick(message) }
                  key={message.id}>
-                Message 1
+                <span class="from">{message.fromaddr}</span>
+                <span class="to">{message.toaddr}</span>
+                <span class="subject">{message.subject}</span>
               </a>
           )}
         </nav>
@@ -51,18 +53,22 @@ class MessageBody extends React.Component {
             r.json().then(d => {
               this.setState({body: d.body})
             })
-          })
+          });
+      this.setState({body: null});
     } else {
       this.setState({body: null});
     }
   }
 
   render() {
-    if (this.state.body) {
+    if (this.props.message) {
       return (
           <section class="body">
+            From: {this.props.message.fromaddr}<br/>
+            To: {this.props.message.toaddr}<br/>
+            Received: {this.props.message.received}<br/>
               <pre>
-                {this.state.body}
+                {this.state.body || ''}
               </pre>
           </section>
       )

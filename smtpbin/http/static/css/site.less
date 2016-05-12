@@ -3,12 +3,11 @@
 * {
   font-family: 'Roboto', sans-serif;
   padding: 0;
-  background-color: #f7f7f7;
-
 }
 
 html, body {
   height: 100%;
+  background-color: #f7f7f7;
 }
 
 a {
@@ -76,6 +75,17 @@ a {
           line-height: 1.5em;
           &.selected {
             background-color: #dadada;
+          }
+
+          display: flex;
+          flex-flow: row nowrap;
+          span {
+            flex: 1;
+            overflow: hidden;
+          }
+
+          span:last-of-type {
+            flex: 3;
           }
         }
       }

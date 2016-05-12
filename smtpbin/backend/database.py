@@ -44,6 +44,9 @@ class DataBase(object):
             self._conn.commit()
             cur.close()
 
+    def commit(self):
+        self._conn.commit()
+
     def get_message(self, inbox, message):
         with self.cursor() as cur:
             cur.execute("SELECT id, received, fromaddr, toaddr, subject, body "
@@ -75,7 +78,7 @@ class DataBase(object):
         with self.cursor() as cur:
             cur.execute("SELECT id, name, apikey, count, unread "
                         "FROM inbox "
-                        "WHERE id = ?;", (id, ))
+                        "WHERE id = ?;", (id,))
             return cur.fetchone()
 
     def get_inbox_by_name(self, name):
@@ -104,3 +107,10 @@ class DataBase(object):
             cur.execute("INSERT INTO inbox (name, apikey) "
                         "VALUES (?, ?)", (name, apikey))
             return cur.lastrowid
+
+    def set_inbox_apikey(self, name, apikey):
+        with self.cursor() as cur:
+            cur.execute("UPDATE inbox "
+                        "SET apikey = ?"
+                        "WHERE name = ?;", (apikey, name))
+            return cur.rowcount

@@ -3,14 +3,13 @@
 import asyncore
 import socket
 
-from smtpbin.backend.database import DataBase
 from smtpbin.http.router import HTTPRouter
 
 
-class HTTPServer(asyncore.dispatcher):
-    def __init__(self, addr):
+class HTTPServer(asyncore.dispatcher_with_send):
+    def __init__(self, addr, database):
         self.addr = addr
-        self.database = DataBase()
+        self.database = database
 
         asyncore.dispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)

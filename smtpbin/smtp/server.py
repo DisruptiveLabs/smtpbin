@@ -8,10 +8,11 @@ from smtpbin.smtp.channel import SMTPBinChannel
 class SMTPBinServer(smtpd.SMTPServer):
     channel_class = SMTPBinChannel
 
-    def __init__(self, addr):
+    def __init__(self, addr, database):
         super().__init__(addr, None)
+        self.database = database
         self.log_to_stdout = True
-        self.database = DataBase()
+
         print("Listening for SMTP on {0}:{1}".format(*addr))
 
     def process_message(self, inbox, peer, mailfrom, rcpttos, data, **kwargs):

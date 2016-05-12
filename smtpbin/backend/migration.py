@@ -35,7 +35,5 @@ MIGRATIONS = [
          "  WHERE id = NEW.inbox;"
          "END;",
 
-         "INSERT INTO inbox (name, apikey) VALUES ('frankcmng.ngrok.io', 'thisisatest');",
-
          "INSERT INTO _version (version) VALUES (1);"]),
 ]
