@@ -71,12 +71,14 @@ a:hover {
 .wrap main article nav a.selected {
   background-color: #dadada;
 }
-.wrap main article nav a span {
+.wrap main article nav a div {
   flex: 1;
   overflow: hidden;
+  padding: 4px 12px 4px 4px;
 }
-.wrap main article nav a span:last-of-type {
+.wrap main article nav a div:last-of-type {
   flex: 3;
+  padding: 4px;
 }
 .wrap main article section {
   flex: 3;

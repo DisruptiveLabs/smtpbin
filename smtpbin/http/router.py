@@ -64,6 +64,7 @@ class HTTPRouter(asyncore.dispatcher):
 
         req = HTTPRequest(data)
 
+
         print(req.command, req.path)
 
         try:

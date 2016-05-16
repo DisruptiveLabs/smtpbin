@@ -1,16 +1,17 @@
 import email
 import smtpd
 
-from smtpbin.backend import DataBase
 from smtpbin.smtp.channel import SMTPBinChannel
 
 
-class SMTPBinServer(smtpd.SMTPServer):
+class SMTPServer(smtpd.SMTPServer):
     channel_class = SMTPBinChannel
 
     def __init__(self, addr, database):
-        super().__init__(addr, None)
+        super(SMTPServer, self).__init__(addr, None)
+
         self.database = database
+        database.smtpserver = self
         self.log_to_stdout = True
 
         print("Listening for SMTP on {0}:{1}".format(*addr))
@@ -26,4 +27,4 @@ class SMTPBinServer(smtpd.SMTPServer):
             print(data)
 
         for recipient in rcpttos:
-            self.database.add_message(inbox, mailfrom, recipient, message['Subject'], data)
+            message_id = self.database.add_message(inbox, mailfrom, recipient, message['Subject'], data)

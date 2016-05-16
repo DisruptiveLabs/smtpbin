@@ -1,1 +1,1 @@
-from .server import SMTPBinServer
+from .server import SMTPServer

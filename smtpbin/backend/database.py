@@ -1,5 +1,6 @@
 import contextlib
 import datetime
+import json
 import sqlite3
 
 from .migration import MIGRATIONS
@@ -17,6 +18,10 @@ class DataBase(object):
         self._conn = sqlite3.connect(uri)
 
         self._upgrade()
+
+        self.websocketserver = None
+        self.httpserver = None
+        self.smtpserver = None
 
     def _upgrade(self):
         cur = self._conn.cursor()
@@ -47,6 +52,11 @@ class DataBase(object):
     def commit(self):
         self._conn.commit()
 
+    def broadcast(self, event, data):
+        if self.websocketserver:
+            self.websocketserver.broadcast(json.dumps({'type': event,
+                                                       'data': data}))
+
     def get_message(self, inbox, message):
         with self.cursor() as cur:
             cur.execute("SELECT id, received, fromaddr, toaddr, subject, body "
@@ -65,8 +75,16 @@ class DataBase(object):
 
     def add_message(self, inbox, fromaddr, toaddr, subject, body):
         with self.cursor() as cur:
+            now = datetime.datetime.now()
             cur.execute("INSERT INTO messages (inbox, received, fromaddr, toaddr, subject, body) "
-                        "VALUES (?, ?, ?, ?, ?, ?)", (inbox, datetime.datetime.now(), fromaddr, toaddr, subject, body))
+                        "VALUES (?, ?, ?, ?, ?, ?)", (inbox, now, fromaddr, toaddr, subject, body))
+
+            self.broadcast('message', dict(id=cur.lastrowid,
+                                           inbox=inbox,
+                                           received=now.strftime(''),
+                                           fromaddr=fromaddr,
+                                           toaddr=toaddr,
+                                           subject=subject))
             return cur.lastrowid
 
     def count_messages(self):
@@ -106,6 +124,8 @@ class DataBase(object):
         with self.cursor() as cur:
             cur.execute("INSERT INTO inbox (name, apikey) "
                         "VALUES (?, ?)", (name, apikey))
+
+            self.broadcast('inbox', dict(id=cur.lastrowid, name=name, apikey=apikey, count=0, unread=0))
             return cur.lastrowid
 
     def set_inbox_apikey(self, name, apikey):

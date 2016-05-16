@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+import string
 
 from smtpbin.http.exceptions import HTTPError
 
@@ -30,16 +31,30 @@ with open(os.path.join(SEND_FILE_PATH, 'mime.json'), 'r') as f:
                 mime.add_type(type, extension)
 
 
-def send_file(name):
+def get_file_contents(name, mode='rb'):
     if name.startswith("/"):
         name = name[1:]
 
     filename = os.path.join(STATIC_PATH, name)
-    mimetype, encoding = mime.guess_type(filename)
 
+    with open(filename, mode) as f:
+        return f.read()
+
+
+def send_file(name):
+    mimetype = mime.guess_type(name)[0] or 'application/octet-stream'
     try:
-        with open(filename, 'rb') as f:
-            return 200, f.read(), {'Content-Length': os.stat(filename).st_size,
-                                   'Content-Type': mimetype or 'application/octet-stream'}
+        body = get_file_contents(name)
+        return 200, body, {'Content-Length': len(body), 'Content-Type': mimetype}
+    except IOError:
+        raise HTTPError(404, name)
+
+
+def render_template(name, **kwargs):
+    mimetype = mime.guess_type(name)[0] or 'application/octet-stream'
+    try:
+        template = string.Template(get_file_contents(name, 'r'))
+        body = template.substitute(**kwargs).encode()
+        return 200, body, {'Content-Length': len(body), 'Content-Type': mimetype}
     except IOError:
         raise HTTPError(404, name)

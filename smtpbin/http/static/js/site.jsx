@@ -6,7 +6,7 @@ class InboxNav extends React.Component {
           {this.props.inboxes.map(inbox =>
               <a
                   style={{
-                    backgroundColor: inbox == this.props.inbox ? "#dadada": null
+                    backgroundColor: inbox.name == this.props.selectedInbox ? "#dadada": null
                   }}
                   onClick={ e => this.props.onClick(inbox) }
                   key={inbox.name}>
@@ -25,13 +25,13 @@ class MessageList extends React.Component {
           {this.props.messages.map(message =>
               <a class="message"
                  style={{
-                    backgroundColor: message == this.props.message ? "#dadada": null
+                    backgroundColor: message.id == this.props.selectedMessage ? "#dadada": null
                   }}
                  onClick={ e => this.props.onClick(message) }
                  key={message.id}>
-                <span class="from">{message.fromaddr}</span>
-                <span class="to">{message.toaddr}</span>
-                <span class="subject">{message.subject}</span>
+                <div class="from">{message.fromaddr}</div>
+                <div class="to">{message.toaddr}</div>
+                <div class="subject">{message.subject}</div>
               </a>
           )}
         </nav>
@@ -47,16 +47,57 @@ class MessageBody extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.inbox && nextProps.message) {
-      fetch('/api/inbox/' + nextProps.inbox.name + '/messages/' + nextProps.message.id)
-          .then(r => {
-            r.json().then(d => {
-              this.setState({body: d.body})
-            })
-          });
-      this.setState({body: null});
+    if (nextProps.selectedInbox && nextProps.message) {
+      if (nextProps.message !== this.props.message) {
+        fetch('/api/inbox/' + nextProps.selectedInbox + '/messages/' + nextProps.message.id)
+            .then(r => {
+              r.json().then(d => {
+                this.setState({body: d.body})
+              })
+            });
+        this.setState({body: null});
+      }
     } else {
       this.setState({body: null});
+    }
+  }
+
+  renderMIME(mime_message) {
+    var {headers, body} = mime_message;
+    console.log(headers, body);
+
+    switch (headers['content-type'].split(";")[0].trim()) {
+      case 'multipart/mixed':
+      case 'multipart/alternative':
+      case 'multipart/related':
+        return (<div>
+
+          {body.map(b => this.renderMIME(b))}
+        </div>);
+
+      case 'text/html':
+        return (<div dangerouslySetInnerHTML={{__html: body}}/>);
+      case 'text/plain':
+        return (<pre>{body}</pre>);
+      default:
+        if(body instanceof String) {
+          return (<pre>{body}</pre>);
+        } else {
+          return (<pre>{JSON.stringify(body)}</pre>);
+        }
+
+    }
+  }
+
+  renderBody() {
+    if (this.state.body) {
+      var message = parseMIME(this.state.body);
+
+      return (
+          <div>
+            {this.renderMIME(message)}
+          </div>
+      );
     }
   }
 
@@ -67,9 +108,7 @@ class MessageBody extends React.Component {
             From: {this.props.message.fromaddr}<br/>
             To: {this.props.message.toaddr}<br/>
             Received: {this.props.message.received}<br/>
-              <pre>
-                {this.state.body || ''}
-              </pre>
+            {this.renderBody()}
           </section>
       )
     } else {
@@ -93,8 +132,8 @@ class Messages extends React.Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (nextProps.inbox) {
-      fetch('/api/inbox/' + nextProps.inbox.name + '/messages')
+    if (nextProps.selectedInbox && nextProps.selectedInbox !== this.props.selectedInbox) {
+      fetch('/api/inbox/' + nextProps.selectedInbox + '/messages')
           .then(r =>
               r.json().then(d =>
                   this.setState({messages: d})
@@ -104,18 +143,17 @@ class Messages extends React.Component {
   }
 
   handleMessageSelect(message) {
-    this.setState({selectedMessage: message})
+    this.setState({selectedMessage: message.id})
   }
 
   render() {
     return (
         <article class="messages">
-          <MessageList inbox={this.props.inbox}
-                       messages={this.state.messages}
-                       message={this.state.selectedMessage}
+          <MessageList messages={this.state.messages}
+                       selectedMessage={this.state.selectedMessage}
                        onClick={e => this.handleMessageSelect(e)}/>
-          <MessageBody inbox={this.props.inbox}
-                       message={this.state.selectedMessage}/>
+          <MessageBody selectedInbox={this.props.selectedInbox}
+                       message={this.state.messages.find(m => m.id == this.state.selectedMessage)}/>
         </article>
     );
   }
@@ -138,19 +176,71 @@ class App extends React.Component {
             this.setState({inboxes: d})
           })
         })
+
+    this.ws = this.createWebSocket()
+  }
+
+  createWebSocket() {
+    var ws = new WebSocket("ws://" + document.location.hostname + ":" + window.WEBSOCKET_PORT);
+
+    ws.onerror = e => this.socketError(e);
+    ws.onmessage = e => this.onMessage(e);
+
+    return ws
+  }
+
+  socketError(e) {
+    console.error(e)
+
+    setTimeout(() => this.ws = this.createWebSocket(), 1000);
+  }
+
+  onMessage(e) {
+    var msg = JSON.parse(e.data);
+    var type = msg.type;
+    var value = msg.data;
+
+    switch (type) {
+      case 'message':
+        var inboxes = JSON.parse(JSON.stringify(this.state.inboxes));
+
+        for (var i = 0; i < inboxes.length; i++) {
+          var inbox = inboxes[i];
+          if (inbox.id === value.inbox) {
+            inbox.unread++;
+            inbox.count++;
+            console.log(inbox)
+          }
+        }
+
+        this.setState({inboxes: inboxes});
+
+        if (this.state.selectedInbox == value.inbox) {
+          var messages = this.messages.state.messages;
+          messages.unshift(value);
+          this.messages.setState({messages: messages});
+        }
+
+        break;
+      case 'inbox':
+        break;
+      default:
+        console.log("Unhandled websocket message: ", e);
+    }
   }
 
   handleInboxSelect(inbox) {
-    this.setState({selectedInbox: inbox});
+    this.setState({selectedInbox: inbox.name});
   }
 
   render() {
     return (
         <main>
-          <InboxNav inbox={this.state.selectedInbox}
+          <InboxNav selectedInbox={this.state.selectedInbox}
                     inboxes={this.state.inboxes}
                     onClick={e => this.handleInboxSelect(e)}/>
-          <Messages inbox={this.state.selectedInbox}/>
+          <Messages selectedInbox={this.state.selectedInbox}
+                    ref={c => this.messages = c}/>
         </main>
     );
   }
@@ -159,4 +249,4 @@ class App extends React.Component {
 ReactDOM.render(
     <App/>,
     document.getElementById("app")
-)
+);
