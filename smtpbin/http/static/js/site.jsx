@@ -64,7 +64,6 @@ class MessageBody extends React.Component {
 
   renderMIME(mime_message) {
     var {headers, body} = mime_message;
-    console.log(headers, body);
 
     switch (headers['content-type'].split(";")[0].trim()) {
       case 'multipart/mixed':
@@ -80,7 +79,7 @@ class MessageBody extends React.Component {
       case 'text/plain':
         return (<pre>{body}</pre>);
       default:
-        if(body instanceof String) {
+        if (body instanceof String) {
           return (<pre>{body}</pre>);
         } else {
           return (<pre>{JSON.stringify(body)}</pre>);
@@ -213,12 +212,12 @@ class App extends React.Component {
           }
         }
 
-        this.setState({inboxes: inboxes});
+        this.setState({inboxes});
 
-        if (this.state.selectedInbox == value.inbox) {
+        if (this.state.selectedInbox == this.state.inboxes.filter(i => i.id == value.inbox)[0].name) {
           var messages = this.messages.state.messages;
           messages.unshift(value);
-          this.messages.setState({messages: messages});
+          this.messages.setState({messages});
         }
 
         break;
