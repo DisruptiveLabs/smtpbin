@@ -180,7 +180,8 @@ class App extends React.Component {
   }
 
   createWebSocket() {
-    var ws = new WebSocket("ws://" + document.location.hostname + ":" + window.WEBSOCKET_PORT);
+    var scheme = document.location.protocol === 'https:' ? 'wss://' : 'ws://',
+        ws = new WebSocket(scheme + document.location.hostname + ":" + window.WEBSOCKET_PORT);
 
     ws.onerror = e => this.socketError(e);
     ws.onmessage = e => this.onMessage(e);
